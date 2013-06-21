@@ -69,25 +69,40 @@ static struct ltq_ebu_regs *ltq_ebu_regs =
 
 void ltq_ebu_init(void)
 {
-	ltq_writel(&ltq_ebu_regs->addr_sel_0, LTQ_EBU_REGION0_BASE |
-		EBU_ADDRSEL_MASK(3) | EBU_ADDRSEL_REGEN);
+	if (ebu_region0_enable) {
+		/*
+		 * Map EBU region 0 to range 0x10000000-0x13ffffff and enable
+		 * region control. This supports up to 32 MiB NOR flash in
+		 * bank 0.
+		 */
+		ltq_writel(&ltq_ebu_regs->addr_sel_0, LTQ_EBU_REGION0_BASE |
+			EBU_ADDRSEL_MASK(1) | EBU_ADDRSEL_REGEN);
 
-	ltq_writel(&ltq_ebu_regs->con_0, EBU_CON_AGEN_DEMUX |
-		EBU_CON_WAIT_DIS | EBU_CON_PW_16BIT |
-		EBU_CON_ALEC(3) | EBU_CON_BCGEN_INTEL |
-		EBU_CON_WAITWRC(7) | EBU_CON_WAITRDC(3) |
-		EBU_CON_HOLDC(3) | EBU_CON_RECOVC(3) |
-		EBU_CON_CMULT_16);
+		ltq_writel(&ltq_ebu_regs->con_0, EBU_CON_AGEN_DEMUX |
+			EBU_CON_WAIT_DIS | EBU_CON_PW_16BIT |
+			EBU_CON_ALEC(3) | EBU_CON_BCGEN_INTEL |
+			EBU_CON_WAITWRC(7) | EBU_CON_WAITRDC(3) |
+			EBU_CON_HOLDC(3) | EBU_CON_RECOVC(3) |
+			EBU_CON_CMULT_16);
+	} else
+		ltq_clrbits(&ltq_ebu_regs->addr_sel_0, EBU_ADDRSEL_REGEN);
 
-	ltq_writel(&ltq_ebu_regs->addr_sel_1, 0x10800000 |
-		EBU_ADDRSEL_MASK(3) | EBU_ADDRSEL_REGEN);
+	if (ebu_region1_enable) {
+		/*
+		 * Map EBU region 1 to range 0x14000000-0x13ffffff and enable
+		 * region control. This supports NAND flash in bank 1.
+		 */
+		ltq_writel(&ltq_ebu_regs->addr_sel_1, LTQ_EBU_REGION1_BASE |
+			EBU_ADDRSEL_MASK(3) | EBU_ADDRSEL_REGEN);
 
-	ltq_writel(&ltq_ebu_regs->con_1, EBU_CON_AGEN_DEMUX |
-		EBU_CON_WAIT_DIS | EBU_CON_PW_16BIT |
-		EBU_CON_ALEC(3) | EBU_CON_BCGEN_INTEL |
-		EBU_CON_WAITWRC(7) | EBU_CON_WAITRDC(3) |
-		EBU_CON_HOLDC(3) | EBU_CON_RECOVC(3) |
-		EBU_CON_CMULT_16);
+		ltq_writel(&ltq_ebu_regs->con_1, EBU_CON_AGEN_DEMUX |
+			EBU_CON_SETUP | EBU_CON_WAIT_DIS | EBU_CON_PW_8BIT |
+			EBU_CON_ALEC(3) | EBU_CON_BCGEN_INTEL |
+			EBU_CON_WAITWRC(2) | EBU_CON_WAITRDC(2) |
+			EBU_CON_HOLDC(1) | EBU_CON_RECOVC(1) |
+			EBU_CON_CMULT_4);
+	} else
+		ltq_clrbits(&ltq_ebu_regs->addr_sel_1, EBU_ADDRSEL_REGEN);
 }
 
 void *flash_swap_addr(unsigned long addr)
