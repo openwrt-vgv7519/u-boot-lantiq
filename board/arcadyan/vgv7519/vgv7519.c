@@ -33,19 +33,6 @@
 
 static void gpio_init(void)
 {
-	/* SPI CS 0.4 to serial flash */
-	gpio_direction_output(10, 1);
-
-	/* EBU.FL_CS1 as output for NAND CE */
-	gpio_set_altfunc(23, GPIO_ALTSEL_SET, GPIO_ALTSEL_CLR, GPIO_DIR_OUT);
-	/* EBU.FL_A23 as output for NAND CLE */
-	gpio_set_altfunc(24, GPIO_ALTSEL_SET, GPIO_ALTSEL_CLR, GPIO_DIR_OUT);
-	/* EBU.FL_A24 as output for NAND ALE */
-	gpio_set_altfunc(13, GPIO_ALTSEL_SET, GPIO_ALTSEL_CLR, GPIO_DIR_OUT);
-	/* GPIO 3.0 as input for NAND Ready Busy */
-	gpio_set_altfunc(48, GPIO_ALTSEL_SET, GPIO_ALTSEL_CLR, GPIO_DIR_IN);
-	/* GPIO 3.1 as output for NAND Read */
-	gpio_set_altfunc(49, GPIO_ALTSEL_SET, GPIO_ALTSEL_CLR, GPIO_DIR_OUT);
 }
 
 int board_early_init_f(void)
@@ -103,37 +90,4 @@ int board_eth_init(bd_t * bis)
 	ltq_rcu_gphy_boot(1, fw_addr);
 
 	return ltq_eth_initialize(&eth_board_config);
-}
-
-int spi_cs_is_valid(unsigned int bus, unsigned int cs)
-{
-	if (bus)
-		return 0;
-
-	if (cs == 4)
-		return 1;
-
-	return 0;
-}
-
-void spi_cs_activate(struct spi_slave *slave)
-{
-	switch (slave->cs) {
-	case 4:
-		gpio_set_value(10, 0);
-		break;
-	default:
-		break;
-	}
-}
-
-void spi_cs_deactivate(struct spi_slave *slave)
-{
-	switch (slave->cs) {
-	case 4:
-		gpio_set_value(10, 1);
-		break;
-	default:
-		break;
-	}
 }
