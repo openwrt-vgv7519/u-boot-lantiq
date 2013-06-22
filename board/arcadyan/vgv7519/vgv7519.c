@@ -33,6 +33,8 @@
 
 static void gpio_init(void)
 {
+	/* Disable reset on external eth PHY */
+	gpio_direction_output(47, 1);
 }
 
 int board_early_init_f(void)
