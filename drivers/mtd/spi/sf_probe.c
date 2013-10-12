@@ -175,8 +175,8 @@ static struct spi_flash *spi_flash_validate_params(struct spi_slave *spi,
 	}
 
 	if (i == ARRAY_SIZE(spi_flash_params_table)) {
-		printf("SF: Unsupported flash IDs: ");
-		printf("manuf %02x, jedec %04x, ext_jedec %04x\n",
+		debug("SF: Unsupported flash IDs: ");
+		debug("manuf %02x, jedec %04x, ext_jedec %04x\n",
 		       idcode[0], jedec, ext_jedec);
 		return NULL;
 	}
@@ -294,7 +294,7 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 	/* Setup spi_slave */
 	spi = spi_setup_slave(bus, cs, max_hz, spi_mode);
 	if (!spi) {
-		printf("SF: Failed to set up slave\n");
+		debug("SF: Failed to set up slave\n");
 		return NULL;
 	}
 
@@ -308,7 +308,7 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 	/* Read the ID codes */
 	ret = spi_flash_cmd(spi, CMD_READ_ID, idcode, sizeof(idcode));
 	if (ret) {
-		printf("SF: Failed to get idcodes\n");
+		debug("SF: Failed to get idcodes\n");
 		goto err_read_id;
 	}
 
@@ -339,8 +339,8 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 #endif
 #ifndef CONFIG_SPI_FLASH_BAR
 	if (flash->size > SPI_FLASH_16MB_BOUN) {
-		puts("SF: Warning - Only lower 16MiB accessible,");
-		puts(" Full access #define CONFIG_SPI_FLASH_BAR\n");
+		debug("SF: Warning - Only lower 16MiB accessible,");
+		debug(" Full access #define CONFIG_SPI_FLASH_BAR\n");
 	}
 #endif
 
