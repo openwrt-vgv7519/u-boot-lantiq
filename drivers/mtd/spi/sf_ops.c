@@ -116,12 +116,6 @@ int spi_flash_write_common(struct spi_flash *flash, const u8 *cmd,
 	if (buf == NULL)
 		timeout = SPI_FLASH_PAGE_ERASE_TIMEOUT;
 
-	ret = spi_claim_bus(flash->spi);
-	if (ret) {
-		debug("SF: unable to claim SPI bus\n");
-		return ret;
-	}
-
 	ret = spi_flash_cmd_write_enable(flash);
 	if (ret < 0) {
 		debug("SF: enabling write failed\n");
@@ -142,8 +136,6 @@ int spi_flash_write_common(struct spi_flash *flash, const u8 *cmd,
 		return ret;
 	}
 
-	spi_release_bus(spi);
-
 	return ret;
 }
 
@@ -159,6 +151,12 @@ int spi_flash_cmd_erase_ops(struct spi_flash *flash, u32 offset, size_t len)
 		return -1;
 	}
 
+	ret = spi_claim_bus(flash->spi);
+	if (ret) {
+		debug("SF: unable to claim SPI bus\n");
+		return ret;
+	}
+
 	cmd[0] = flash->erase_cmd;
 	while (len) {
 #ifdef CONFIG_SPI_FLASH_BAR
@@ -169,6 +167,7 @@ int spi_flash_cmd_erase_ops(struct spi_flash *flash, u32 offset, size_t len)
 		ret = spi_flash_cmd_bankaddr_write(flash, bank_sel);
 		if (ret) {
 			debug("SF: fail to set bank%d\n", bank_sel);
+			spi_release_bus(flash->spi);
 			return ret;
 		}
 #endif
@@ -187,6 +186,8 @@ int spi_flash_cmd_erase_ops(struct spi_flash *flash, u32 offset, size_t len)
 		len -= erase_size;
 	}
 
+	spi_release_bus(flash->spi);
+
 	return ret;
 }
 
@@ -197,6 +198,12 @@ int spi_flash_cmd_write_ops(struct spi_flash *flash, u32 offset,
 	size_t chunk_len, actual;
 	u8 cmd[4];
 	int ret = -1;
+
+	ret = spi_claim_bus(flash->spi);
+	if (ret) {
+		debug("SF: unable to claim SPI bus\n");
+		return ret;
+	}
 
 	page_size = flash->page_size;
 
@@ -210,6 +217,7 @@ int spi_flash_cmd_write_ops(struct spi_flash *flash, u32 offset,
 		ret = spi_flash_cmd_bankaddr_write(flash, bank_sel);
 		if (ret) {
 			debug("SF: fail to set bank%d\n", bank_sel);
+			spi_release_bus(flash->spi);
 			return ret;
 		}
 #endif
@@ -234,6 +242,8 @@ int spi_flash_cmd_write_ops(struct spi_flash *flash, u32 offset,
 		offset += chunk_len;
 	}
 
+	spi_release_bus(flash->spi);
+
 	return ret;
 }
 
@@ -243,19 +253,11 @@ int spi_flash_read_common(struct spi_flash *flash, const u8 *cmd,
 	struct spi_slave *spi = flash->spi;
 	int ret;
 
-	ret = spi_claim_bus(flash->spi);
-	if (ret) {
-		debug("SF: unable to claim SPI bus\n");
-		return ret;
-	}
-
 	ret = spi_flash_cmd_read(spi, cmd, cmd_len, data, data_len);
 	if (ret < 0) {
 		debug("SF: read cmd failed\n");
 		return ret;
 	}
-
-	spi_release_bus(spi);
 
 	return ret;
 }
@@ -266,6 +268,12 @@ int spi_flash_cmd_read_ops(struct spi_flash *flash, u32 offset,
 	u8 cmd[5], bank_sel = 0;
 	u32 remain_len, read_len;
 	int ret = -1;
+
+	ret = spi_claim_bus(flash->spi);
+	if (ret) {
+		debug("SF: unable to claim SPI bus\n");
+		return ret;
+	}
 
 	/* Handle memory-mapped SPI */
 	if (flash->memory_map) {
@@ -285,6 +293,7 @@ int spi_flash_cmd_read_ops(struct spi_flash *flash, u32 offset,
 		ret = spi_flash_cmd_bankaddr_write(flash, bank_sel);
 		if (ret) {
 			debug("SF: fail to set bank%d\n", bank_sel);
+			spi_release_bus(flash->spi);
 			return ret;
 		}
 #endif
@@ -307,6 +316,8 @@ int spi_flash_cmd_read_ops(struct spi_flash *flash, u32 offset,
 		len -= read_len;
 		data += read_len;
 	}
+
+	spi_release_bus(flash->spi);
 
 	return ret;
 }
