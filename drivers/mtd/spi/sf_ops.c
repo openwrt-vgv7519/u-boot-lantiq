@@ -21,6 +21,7 @@ static void spi_flash_addr(const struct spi_flash *flash, u32 addr, u8 *cmd)
 	cmd[1] = addr >> (flash->addr_width * 8 - 8);
 	cmd[2] = addr >> (flash->addr_width * 8 - 16);
 	cmd[3] = addr >> (flash->addr_width * 8 - 24);
+	cmd[4] = addr >> (flash->addr_width * 8 - 32);
 }
 
 static int spi_flash_cmdsz(const struct spi_flash *flash)
@@ -147,7 +148,7 @@ int spi_flash_write_common(struct spi_flash *flash, const u8 *cmd,
 int spi_flash_cmd_erase_ops(struct spi_flash *flash, u32 offset, size_t len)
 {
 	u32 erase_size;
-	u8 cmd[4], cmd_len;
+	u8 cmd[5], cmd_len;
 	int ret = -1;
 
 	erase_size = flash->erase_size;
@@ -179,8 +180,8 @@ int spi_flash_cmd_erase_ops(struct spi_flash *flash, u32 offset, size_t len)
 		spi_flash_addr(flash, offset, cmd);
 		cmd_len = spi_flash_cmdsz(flash);
 
-		debug("SF: erase %2x %2x %2x %2x (%x)\n", cmd[0], cmd[1],
-		      cmd[2], cmd[3], offset);
+		debug("SF: erase %2x %2x %2x %2x %2x (%x)\n", cmd[0], cmd[1],
+		      cmd[2], cmd[3], cmd[4], offset);
 
 		ret = spi_flash_write_common(flash, cmd, cmd_len, NULL, 0);
 		if (ret < 0) {
@@ -202,7 +203,7 @@ int spi_flash_cmd_write_ops(struct spi_flash *flash, u32 offset,
 {
 	unsigned long byte_addr, page_size;
 	size_t chunk_len, actual;
-	u8 cmd[4], cmd_len;
+	u8 cmd[5], cmd_len;
 	int ret = -1;
 
 	ret = spi_claim_bus(flash->spi);
@@ -236,8 +237,8 @@ int spi_flash_cmd_write_ops(struct spi_flash *flash, u32 offset,
 		spi_flash_addr(flash, offset, cmd);
 		cmd_len = spi_flash_cmdsz(flash);
 
-		debug("PP: 0x%p => cmd = { 0x%02x 0x%02x%02x%02x } chunk_len = %zu\n",
-		      buf + actual, cmd[0], cmd[1], cmd[2], cmd[3], chunk_len);
+		debug("PP: 0x%p => cmd = { 0x%02x 0x%02x%02x%02x%02x } chunk_len = %zu\n",
+		      buf + actual, cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], chunk_len);
 
 		ret = spi_flash_write_common(flash, cmd, cmd_len,
 					buf + actual, chunk_len);
@@ -272,9 +273,13 @@ int spi_flash_read_common(struct spi_flash *flash, const u8 *cmd,
 int spi_flash_cmd_read_ops(struct spi_flash *flash, u32 offset,
 		size_t len, void *data)
 {
-	u8 cmd[5], cmd_len, bank_sel = 0;
-	u32 remain_len, read_len;
+	u8 cmd[6], cmd_len;
+	u32 read_len;
 	int ret = -1;
+#ifdef CONFIG_SPI_FLASH_BAR
+	u8 bank_sel = 0;
+	u32 remain_len;
+#endif
 
 	ret = spi_claim_bus(flash->spi);
 	if (ret) {
@@ -302,12 +307,15 @@ int spi_flash_cmd_read_ops(struct spi_flash *flash, u32 offset,
 			spi_release_bus(flash->spi);
 			return ret;
 		}
-#endif
+
 		remain_len = (SPI_FLASH_16MB_BOUN * (bank_sel + 1) - offset);
 		if (len < remain_len)
 			read_len = len;
 		else
 			read_len = remain_len;
+#else
+		read_len = len;
+#endif
 
 		spi_flash_addr(flash, offset, cmd);
 		cmd_len = spi_flash_cmdsz(flash);
