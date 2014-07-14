@@ -12,6 +12,8 @@
 #define CONFIG_IDENT_STRING	" "CONFIG_MACH_TYPE
 #define CONFIG_BOARD_NAME	"Arcadyan VGV7519 VRX288 Board"
 
+#define CONFIG_SYS_VSNPRINTF
+
 /* Configure SoC */
 #define CONFIG_LTQ_SUPPORT_UART		/* Enable ASC and UART */
 
@@ -31,6 +33,8 @@
 #define CONFIG_ENV_IS_NOWHERE
 #endif
 
+#define CONFIG_SYS_FLASH_BANKS_LIST { CONFIG_SYS_FLASH_BASE, CONFIG_SYS_FLASH2_BASE }
+
 #define CONFIG_ENV_SIZE			(8 * 1024)
 
 #define CONFIG_LOADADDR			CONFIG_SYS_LOAD_ADDR
@@ -43,6 +47,7 @@
 
 /* Commands */
 #define CONFIG_CMD_PING
+#define CONFIG_CMD_GPIO
 
 /* Pull in default board configs for Lantiq XWAY VRX200 */
 #include <asm/lantiq/config.h>
