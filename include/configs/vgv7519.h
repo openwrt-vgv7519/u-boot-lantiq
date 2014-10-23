@@ -21,6 +21,11 @@
 
 #define CONFIG_LTQ_SUPPORT_NOR_FLASH	/* Have a parallel NOR flash */
 
+#define CONFIG_LTQ_SUPPORT_SPL_NOR_FLASH	/* Build NOR flash SPL */
+
+#define CONFIG_LTQ_SPL_COMP_LZO
+#define CONFIG_LTQ_SPL_CONSOLE
+
 #define CONFIG_SYS_DRAM_PROBE
 
 /* Environment */
@@ -28,6 +33,11 @@
 #define CONFIG_ENV_IS_IN_FLASH
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_ENV_OFFSET		(384 * 1024)
+#define CONFIG_ENV_SECT_SIZE		(64 * 1024)
+#elif defined(CONFIG_SYS_BOOT_NORSPL)
+#define CONFIG_ENV_IS_IN_FLASH
+#define CONFIG_ENV_OVERWRITE
+#define CONFIG_ENV_OFFSET		(192 * 1024)
 #define CONFIG_ENV_SECT_SIZE		(64 * 1024)
 #else
 #define CONFIG_ENV_IS_NOWHERE
@@ -59,8 +69,13 @@
 /* Auto boot */
 #define CONFIG_BOOTDELAY		2
 
+#if defined(CONFIG_SYS_BOOT_NORSPL)
+#define CONFIG_ENV_UPDATE_UBOOT_NOR					\
+	"update-uboot-nor=run load-uboot-norspl-lzo write-uboot-nor\0"
+#else
 #define CONFIG_ENV_UPDATE_UBOOT_NOR					\
 	"update-uboot-nor=run load-uboot-nor write-uboot-nor\0"
+#endif
 
 #define CONFIG_EXTRA_ENV_SETTINGS	\
 	CONFIG_ENV_LANTIQ_DEFAULTS	\
